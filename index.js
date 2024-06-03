@@ -1,6 +1,7 @@
 import express from 'express';
 const app = express();
 
+// Puhelinnumerotiedot kovakoodattuna taulukkona
 const persons = [
   { 
     "id": 1,
@@ -24,15 +25,27 @@ const persons = [
   }
 ];
 
-// Reitti /api/persons palauttaa puhelinluettelotiedot
+// Palauttaa kaikki puhelinnumerotiedot
 app.get('/api/persons', (req, res) => {
   res.json(persons);
 });
 
-// Reitti /info palauttaa tietoja puhelinluettelosta ja nykyisen kellonajan
+// Palauttaa yksittäisen puhelinnumerotiedon id:n perusteella
+app.get('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const person = persons.find(person => person.id === id);
+
+  if (person) {
+    res.json(person);
+  } else {
+    res.status(404).json({ error: 'Person not found' });
+  }
+});
+
+// Palauttaa tietoja puhelinluettelosta ja nykyisen kellonajan
 app.get('/info', (req, res) => {
   const numberOfPersons = persons.length;
-  const currentTime = new Date().toString();
+  const currentTime = new Date();
   
   const infoPage = `
     <div>
