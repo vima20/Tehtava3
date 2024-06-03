@@ -1,8 +1,7 @@
 import express from 'express';
 const app = express();
 
-// Puhelinnumerotiedot kovakoodattuna taulukkona
-const persons = [
+let persons = [
   { 
     "id": 1,
     "name": "Arto Hellas", 
@@ -25,12 +24,15 @@ const persons = [
   }
 ];
 
-// Palauttaa kaikki puhelinnumerotiedot
+// Middleware for parsing JSON bodies
+app.use(express.json());
+
+// GET route to fetch all persons
 app.get('/api/persons', (req, res) => {
   res.json(persons);
 });
 
-// Palauttaa yksittäisen puhelinnumerotiedon id:n perusteella
+// GET route to fetch a single person by id
 app.get('/api/persons/:id', (req, res) => {
   const id = Number(req.params.id);
   const person = persons.find(person => person.id === id);
@@ -42,7 +44,14 @@ app.get('/api/persons/:id', (req, res) => {
   }
 });
 
-// Palauttaa tietoja puhelinluettelosta ja nykyisen kellonajan
+// DELETE route to remove a person by id
+app.delete('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id);
+  persons = persons.filter(person => person.id !== id);
+  res.status(204).end();
+});
+
+// Route to show info about phonebook
 app.get('/info', (req, res) => {
   const numberOfPersons = persons.length;
   const currentTime = new Date();
@@ -57,7 +66,7 @@ app.get('/info', (req, res) => {
   res.send(infoPage);
 });
 
-// Määritetään palvelimen portti
+// Server port
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
