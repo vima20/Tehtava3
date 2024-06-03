@@ -51,6 +51,35 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end();
 });
 
+// POST route to add a new person
+app.post('/api/persons', (req, res) => {
+  const body = req.body;
+
+  if (!body.name || !body.number) {
+    return res.status(400).json({ error: 'Name or number is missing' });
+  }
+
+  const existingPerson = persons.find(person => person.name === body.name);
+  if (existingPerson) {
+    return res.status(400).json({ error: 'Name must be unique' });
+  }
+
+  const person = {
+    id: generateId(),
+    name: body.name,
+    number: body.number,
+  };
+
+  persons = persons.concat(person);
+  res.json(person);
+});
+
+// Function to generate a unique id
+const generateId = () => {
+  const maxId = persons.length > 0 ? Math.max(...persons.map(person => person.id)) : 0;
+  return maxId + 1;
+};
+
 // Route to show info about phonebook
 app.get('/info', (req, res) => {
   const numberOfPersons = persons.length;
