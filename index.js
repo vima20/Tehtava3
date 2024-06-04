@@ -70,28 +70,23 @@ app.delete('/api/persons/:id', async (req, res, next) => {
   }
 });
 
-// POST a new person (using Mongoose)
-app.post('/api/persons', async (req, res, next) => {
+// Update a person by id (using Mongoose)
+app.put('/api/persons/:id', async (req, res, next) => {
+  const id = req.params.id;
   const body = req.body;
 
-  if (!body.name || !body.number) {
-    return res.status(400).json({ error: 'Name or number is missing' });
+  if (!body.number) {
+    return res.status(400).json({ error: 'Number is missing' });
   }
 
-  // You can uncomment this check if you want to prevent duplicate names
-  // const existingPerson = await Person.find({ name: body.name });
-  // if (existingPerson.length > 0) {
-  //   return res.status(400).json({ error: 'Name must be unique' });
-  // }
-
-  const newPerson = new Person({
-    name: body.name,
-    number: body.number,
-  });
-
   try {
-    const savedPerson = await newPerson.save();
-    res.json(savedPerson);
+    const updatedPerson = await Person.findByIdAndUpdate(id, body, { new: true }); // Return the updated document
+
+    if (updatedPerson) {
+      res.json(updatedPerson);
+    } else {
+      res.status(404).end(); // Person not found
+    }
   } catch (error) {
     next(error); // Pass the error to the error handler middleware
   }
@@ -104,8 +99,8 @@ app.get('/info', async (req, res, next) => {
     const currentTime = new Date();
     res.send(`
       <div>
-        <p>Phonebook has info for <span class="math-inline">\{count\} people</p\>
-<p\></span>{currentTime}</p>
+        <p>Phonebook has info for ${count} people</p>
+        <p>${currentTime}</p>
       </div>
     `);
   } catch (error) {
@@ -116,4 +111,7 @@ app.get('/info', async (req, res, next) => {
 // Register the error handling middleware after all other middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001; // Use
+const PORT = process.env.PORT || 3001; // Use environment variable for port if available
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
