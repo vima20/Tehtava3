@@ -1,6 +1,6 @@
-import express from 'express'
+import express from 'express';
 import morgan from 'morgan';
-import mongoose from 'mongoose' // Import for Mongoose database connection
+import mongoose from 'mongoose'; // Import for Mongoose database connection
 
 const app = express();
 
@@ -69,10 +69,11 @@ app.post('/api/persons', async (req, res) => {
     return res.status(400).json({ error: 'Name or number is missing' });
   }
 
-  const existingPerson = await Person.find({ name: body.name });
-  if (existingPerson.length > 0) {
-    return res.status(400).json({ error: 'Name must be unique' });
-  }
+  // You can uncomment this check if you want to prevent duplicate names
+  // const existingPerson = await Person.find({ name: body.name });
+  // if (existingPerson.length > 0) {
+  //   return res.status(400).json({ error: 'Name must be unique' });
+  // }
 
   const newPerson = new Person({
     name: body.name,
