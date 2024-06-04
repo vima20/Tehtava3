@@ -1,100 +1,111 @@
-import express from 'express';
+import express from 'express'
 import morgan from 'morgan';
+import mongoose from 'mongoose' // Import for Mongoose database connection
 
 const app = express();
 
 app.use(express.json());
 app.use(morgan('tiny'));
 
-let persons = [
-  { 
-    "id": 1,
-    "name": "Arto Hellas", 
-    "number": "040-123456"
-  },
-  { 
-    "id": 2,
-    "name": "Ada Lovelace", 
-    "number": "39-44-5323523"
-  },
-  { 
-    "id": 3,
-    "name": "Dan Abramov", 
-    "number": "12-43-234345"
-  },
-  { 
-    "id": 4,
-    "name": "Mary Poppendieck", 
-    "number": "39-23-6423122"
-  }
-];
+// Mongoose connection setup (replace placeholders with your actual credentials)
+const url = 'mongodb://<username>:<password>@<hostname>:<port>/<database>';
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(error => console.error('Error connecting to MongoDB:', error));
 
-// GET all persons
-app.get('/api/persons', (req, res) => {
-  res.json(persons);
+// Define Person schema for MongoDB data
+const personSchema = new mongoose.Schema({
+  name: String,
+  number: String,
 });
 
-// GET a single person by id
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find(person => person.id === id);
+const Person = mongoose.model('Person', personSchema);
 
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
+// GET all persons (using Mongoose)
+app.get('/api/persons', async (req, res) => {
+  try {
+    const people = await Person.find();
+    res.json(people);
+  } catch (error) {
+    console.error(error);
+    res.status(500).end(); // Handle potential errors gracefully
   }
 });
 
-// DELETE a person by id
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter(person => person.id !== id);
-  res.status(204).end();
+// GET a single person by id (using Mongoose)
+app.get('/api/persons/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const person = await Person.findById(id);
+
+    if (person) {
+      res.json(person);
+    } else {
+      res.status(404).end();
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).end(); // Handle potential errors gracefully
+  }
 });
 
-// POST a new person
-app.post('/api/persons', (req, res) => {
+// DELETE a person by id (using Mongoose)
+app.delete('/api/persons/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    await Person.findByIdAndDelete(id);
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).end(); // Handle potential errors gracefully
+  }
+});
+
+// POST a new person (using Mongoose)
+app.post('/api/persons', async (req, res) => {
   const body = req.body;
 
   if (!body.name || !body.number) {
     return res.status(400).json({ error: 'Name or number is missing' });
   }
 
-  const existingPerson = persons.find(person => person.name === body.name);
-  if (existingPerson) {
+  const existingPerson = await Person.find({ name: body.name });
+  if (existingPerson.length > 0) {
     return res.status(400).json({ error: 'Name must be unique' });
   }
 
-  const person = {
-    id: generateId(),
+  const newPerson = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-  res.json(person);
+  try {
+    const savedPerson = await newPerson.save();
+    res.json(savedPerson);
+  } catch (error) {
+    console.error(error);
+    res.status(500).end(); // Handle potential errors gracefully
+  }
 });
 
 // GET info page
-app.get('/info', (req, res) => {
-  const numberOfPersons = persons.length;
-  const currentTime = new Date();
-  res.send(`
-    <div>
-      <p>Phonebook has info for ${numberOfPersons} people</p>
-      <p>${currentTime}</p>
-    </div>
-  `);
+app.get('/info', async (req, res) => {
+  try {
+    const count = await Person.countDocuments();
+    const currentTime = new Date();
+    res.send(`
+      <div>
+        <p>Phonebook has info for ${count} people</p>
+        <p>${currentTime}</p>
+      </div>
+    `);
+  } catch (error) {
+    console.error(error);
+    res.status(500).end(); // Handle potential errors gracefully
+  }
 });
 
-// Function to generate a unique id
-const generateId = () => {
-  const maxId = persons.length > 0 ? Math.max(...persons.map(person => person.id)) : 0;
-  return maxId + 1;
-};
-
-const PORT = 3001;
+const PORT = process.env.PORT || 3001; // Use environment variable for port if available
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
