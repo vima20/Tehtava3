@@ -50,9 +50,22 @@ app.get('/api/persons/:id', async (req, res, next) => {
     const person = await Person.findById(id);
 
     if (person) {
-      res.json(person);
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="fi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Henkilö <span class="math-inline">\{person\.name\}</title\>
+</head\>
+<body\>
+<h1\></span>{person.name}</h1>
+          <p>Puhelinnumero: ${person.number}</p>
+        </body>
+        </html>
+      `);
     } else {
-      res.status(404).end(); // No need for next here, 404 is a valid response
+      res.status(404).end(); // Person not found
     }
   } catch (error) {
     next(error); // Pass the error to the error handler middleware
@@ -95,23 +108,35 @@ app.put('/api/persons/:id', async (req, res, next) => {
 // GET info page
 app.get('/info', async (req, res, next) => {
   try {
+    // Fetch the number of documents in the Person collection
     const count = await Person.countDocuments();
+
+    // Get the current date and time
     const currentTime = new Date();
-    res.send(`
-      <div>
-        <p>Phonebook has info for ${count} people</p>
-        <p>${currentTime}</p>
-      </div>
-    `);
+
+    // Build the HTML response
+    const htmlResponse = `
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Info Page</title>
+</head>
+<body>
+  <h1>Application Information</h1>
+  <p>Number of people in the database: ${count}</p>
+  <p>Current time: ${currentTime.toLocaleString('fi-FI')}</p>
+</body>
+</html>`;
+
+    // Send the HTML response
+    res.send(htmlResponse);
   } catch (error) {
-    next(error); // Pass the error to the error handler middleware
+    // Handle any errors during data retrieval
+    console.error(error);
+    next(error); // Pass the error to the next middleware
   }
 });
 
-// Register the error handling middleware after all other middleware
-app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001; // Use environment variable for port if available
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
