@@ -21,19 +21,30 @@ const personSchema = new mongoose.Schema({
 
 const Person = mongoose.model('Person', personSchema);
 
+// Error handling middleware (place this before route handlers)
+const errorHandler = (err, req, res, next) => {
+  console.error(err); // Log the error to the console
+
+  const statusCode = err.statusCode || 500; // Set the status code based on the error or default to 500
+  const errorMessage = err.message || 'Internal Server Error'; // Set the error message
+
+  res.status(statusCode).json({
+    message: errorMessage,
+  });
+};
+
 // GET all persons (using Mongoose)
-app.get('/api/persons', async (req, res) => {
+app.get('/api/persons', async (req, res, next) => {
   try {
     const people = await Person.find();
     res.json(people);
   } catch (error) {
-    console.error(error);
-    res.status(500).end(); // Handle potential errors gracefully
+    next(error); // Pass the error to the error handler middleware
   }
 });
 
 // GET a single person by id (using Mongoose)
-app.get('/api/persons/:id', async (req, res) => {
+app.get('/api/persons/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
     const person = await Person.findById(id);
@@ -41,28 +52,26 @@ app.get('/api/persons/:id', async (req, res) => {
     if (person) {
       res.json(person);
     } else {
-      res.status(404).end();
+      res.status(404).end(); // No need for next here, 404 is a valid response
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).end(); // Handle potential errors gracefully
+    next(error); // Pass the error to the error handler middleware
   }
 });
 
 // DELETE a person by id (using Mongoose)
-app.delete('/api/persons/:id', async (req, res) => {
+app.delete('/api/persons/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
     await Person.findByIdAndDelete(id);
-    res.status(204).end();
+    res.status(204).end(); // No content to return
   } catch (error) {
-    console.error(error);
-    res.status(500).end(); // Handle potential errors gracefully
+    next(error); // Pass the error to the error handler middleware
   }
 });
 
 // POST a new person (using Mongoose)
-app.post('/api/persons', async (req, res) => {
+app.post('/api/persons', async (req, res, next) => {
   const body = req.body;
 
   if (!body.name || !body.number) {
@@ -84,29 +93,27 @@ app.post('/api/persons', async (req, res) => {
     const savedPerson = await newPerson.save();
     res.json(savedPerson);
   } catch (error) {
-    console.error(error);
-    res.status(500).end(); // Handle potential errors gracefully
+    next(error); // Pass the error to the error handler middleware
   }
 });
 
 // GET info page
-app.get('/info', async (req, res) => {
+app.get('/info', async (req, res, next) => {
   try {
     const count = await Person.countDocuments();
     const currentTime = new Date();
     res.send(`
       <div>
-        <p>Phonebook has info for ${count} people</p>
-        <p>${currentTime}</p>
+        <p>Phonebook has info for <span class="math-inline">\{count\} people</p\>
+<p\></span>{currentTime}</p>
       </div>
     `);
   } catch (error) {
-    console.error(error);
-    res.status(500).end(); // Handle potential errors gracefully
+    next(error); // Pass the error to the error handler middleware
   }
 });
 
-const PORT = process.env.PORT || 3001; // Use environment variable for port if available
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Register the error handling middleware after all other middleware
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3001; // Use
