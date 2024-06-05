@@ -120,6 +120,18 @@ app.post('/api/persons', async (req, res, next) => {
     next(error); // Pass the error to the error handler middleware
   }
 });
+// Custom phone number validation function
+function validatePhoneNumber(number) {
+  // Regular expression pattern for valid phone numbers
+  const pattern = /^0(?-m:\d{2}-\d{5,})|0(?-m:\d{3}-\d{4,})$/;
+
+  // Check if the number matches the pattern
+  if (!pattern.test(number)) {
+    throw new Error('Puhelinnumero on virheellisessä muodossa.');
+  }
+
+  return true; // Valid number
+}
 
 // GET info page
 app.get('/info', async (req, res, next) => {
