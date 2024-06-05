@@ -104,6 +104,22 @@ app.put('/api/persons/:id', async (req, res, next) => {
     next(error); // Pass the error to the error handler middleware
   }
 });
+app.post('/api/persons', async (req, res, next) => {
+  const { name, number } = req.body;
+
+  try {
+    // Validate name length
+    if (name.length < 3) {
+      throw new Error('Nimi on liian lyhyt. Se on oltava vähintään 3 merkkiä pitkä.');
+    }
+
+    const newPerson = new Person({ name, number });
+    const savedPerson = await newPerson.save();
+    res.json(savedPerson);
+  } catch (error) {
+    next(error); // Pass the error to the error handler middleware
+  }
+});
 
 // GET info page
 app.get('/info', async (req, res, next) => {
@@ -138,5 +154,3 @@ app.get('/info', async (req, res, next) => {
     next(error); // Pass the error to the next middleware
   }
 });
-
-
