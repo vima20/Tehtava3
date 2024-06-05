@@ -123,7 +123,8 @@ app.post('/api/persons', async (req, res, next) => {
 // Custom phone number validation function
 function validatePhoneNumber(number) {
   // Regular expression pattern for valid phone numbers
-  const pattern = /^0(?-m:\d{2}-\d{5,})|0(?-m:\d{3}-\d{4,})$/;
+  const pattern = /^0(?P<area>\d{2,3})-(?P<rest>\d{4,})$/;
+
 
   // Check if the number matches the pattern
   if (!pattern.test(number)) {
